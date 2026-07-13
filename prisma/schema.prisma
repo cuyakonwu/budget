@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Account {
+  id           String        @id @default(uuid())
+  name         String
+  type         String        // "CHECKING", "SAVINGS", "CREDIT", "LOAN"
+  balance      Float         @default(0)
+  transactions Transaction[] @relation("AccountTransactions")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Paycheck {
+  id          String    @id @default(uuid())
+  date        DateTime
+  name        String
+  expectedAmt Float
+  actualAmt   Float?
+  bills       Bill[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Bill {
+  id          String   @id @default(uuid())
+  name        String
+  expectedAmt Float
+  dueDate     DateTime
+  isPaid      Boolean  @default(false)
+  
+  paycheckId  String?
+  paycheck    Paycheck? @relation(fields: [paycheckId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  date        DateTime
+  amount      Float    // positive for income, negative for expense
+  payee       String
+  
+  accountId   String
+  account     Account  @relation("AccountTransactions", fields: [accountId], references: [id])
+  
+  transferId  String?
+  
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  
+  isCleared   Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id          String        @id @default(uuid())
+  name        String
+  transactions Transaction[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
